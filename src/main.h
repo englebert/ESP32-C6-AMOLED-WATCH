@@ -11,14 +11,15 @@
 #include "Arduino_GFX_Library.h"
 #include "Arduino_DriveBus_Library.h"
 #include "lv_conf.h"
+#include "SensorPCF85063.hpp"
 #include "XPowersLib.h"
 #include "HWCDC.h"
 
 #include "processes.h"
 
-void Arduino_IIC_Touch_Interrupt(void);
 void adcOn(void);
 void adcOff(void);
 
+void Arduino_IIC_Touch_Interrupt(void);
 
 #endif
