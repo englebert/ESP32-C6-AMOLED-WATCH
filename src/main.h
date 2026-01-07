@@ -23,6 +23,7 @@ extern std::shared_ptr<Arduino_IIC_DriveBus> IIC_Bus;
 #include "touch.h"
 #include "rtc.h"
 #include "display.h"
+#include "page.h"
 
 void adcOn(void);
 void adcOff(void);

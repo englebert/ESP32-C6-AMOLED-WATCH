@@ -38,12 +38,6 @@ void adcOff(void) {
 
  **/
 
-// Global Sprite Object (reuse one to save RAM)
-// Arduino_Canvas *canvas = new Arduino_Canvas(
-//     410 /* width */,
-//     200 /* height */,
-//    gfx)
-// ;
 void setup(void) {
     USBSerial.begin(115200);
     delay(50);

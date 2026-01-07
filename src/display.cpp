@@ -75,13 +75,20 @@ void gesture_event_cb(lv_event_t * e) {
         switch(dir) {
             case LV_DIR_LEFT:
                 USBSerial.println("Gesture: Swipe Left");
+                page--;
+                if(page < 0) page = 0;
                 break;
+
             case LV_DIR_RIGHT:
                 USBSerial.println("Gesture: Swipe Right");
+                page++;
+                if(page > page_max) page = 0;
                 break;
+
             case LV_DIR_TOP:
                 USBSerial.println("Gesture: Swipe Up");
                 break;
+
             case LV_DIR_BOTTOM:
                 USBSerial.println("Gesture: Swipe Down");
                 break;
