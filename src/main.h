@@ -15,11 +15,16 @@
 #include "XPowersLib.h"
 #include "HWCDC.h"
 
+
+extern HWCDC USBSerial;
+extern std::shared_ptr<Arduino_IIC_DriveBus> IIC_Bus;
+
 #include "processes.h"
+#include "touch.h"
+#include "rtc.h"
+#include "display.h"
 
 void adcOn(void);
 void adcOff(void);
-
-void Arduino_IIC_Touch_Interrupt(void);
 
 #endif
