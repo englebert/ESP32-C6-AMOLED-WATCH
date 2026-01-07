@@ -65,6 +65,9 @@ void setup(void) {
     // BLACK screen
     lv_obj_set_style_bg_color(lv_scr_act(), lv_color_hex(BLACK), LV_PART_MAIN);
 
+    // Enable gestures
+    lv_obj_add_event_cb(lv_scr_act(), gesture_event_cb, LV_EVENT_GESTURE, NULL);
+
     // Creating tasks
     xTaskCreate(
         backgroundUpdate,

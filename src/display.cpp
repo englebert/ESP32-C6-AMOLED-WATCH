@@ -66,6 +66,29 @@ void init_display(void) {
     lv_display_add_event_cb(disp, rounder_event_cb, LV_EVENT_INVALIDATE_AREA, NULL);
 }
 
+// Event callback to handle swipes
+void gesture_event_cb(lv_event_t * e) {
+    lv_event_code_t code = lv_event_get_code(e);
+
+    if(code == LV_EVENT_GESTURE) {
+        lv_dir_t dir = lv_indev_get_gesture_dir(lv_indev_get_act());
+        switch(dir) {
+            case LV_DIR_LEFT:
+                USBSerial.println("Gesture: Swipe Left");
+                break;
+            case LV_DIR_RIGHT:
+                USBSerial.println("Gesture: Swipe Right");
+                break;
+            case LV_DIR_TOP:
+                USBSerial.println("Gesture: Swipe Up");
+                break;
+            case LV_DIR_BOTTOM:
+                USBSerial.println("Gesture: Swipe Down");
+                break;
+        }
+    }
+}
+
 void rounder_event_cb(lv_event_t *e) {
     lv_area_t *area = (lv_area_t *)lv_event_get_param(e);
     uint16_t x1 = area->x1;
