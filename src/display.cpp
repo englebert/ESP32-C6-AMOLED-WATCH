@@ -6,6 +6,7 @@ uint32_t screenHeight;
 uint32_t bufSize;
 lv_display_t *disp;
 lv_color_t *disp_draw_buf;
+bool display_status = true;
 
 Arduino_DataBus *bus = new Arduino_ESP32QSPI(
     LCD_CS,
@@ -71,6 +72,8 @@ void gesture_event_cb(lv_event_t * e) {
     lv_event_code_t code = lv_event_get_code(e);
 
     if(code == LV_EVENT_GESTURE) {
+        // Reset awake_time for stay on
+        awake_time = 0;
         lv_dir_t dir = lv_indev_get_gesture_dir(lv_indev_get_act());
         switch(dir) {
             case LV_DIR_LEFT:

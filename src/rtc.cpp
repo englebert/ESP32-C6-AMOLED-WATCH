@@ -10,7 +10,9 @@ void init_rtc(void) {
 
         // RTC Error. Hang here.
         while(true) {
-            delay(1000);
+            delay(10);
         }
     }
+
+    bootuptime = rtc.hwClockRead();
 }

@@ -3,10 +3,7 @@
 
 HWCDC USBSerial;
 
-lv_obj_t *info_label;
-
-lv_obj_t *label;  // Global label object
-uint32_t lastMillis;
+time_t bootuptime;
 
 std::shared_ptr<Arduino_IIC_DriveBus> IIC_Bus =
     std::make_shared<Arduino_HWIIC>(
@@ -51,10 +48,20 @@ void setup(void) {
 
     Wire.begin(IIC_SDA, IIC_SCL);
 
-    init_touch();
     init_rtc();
     init_display();
     init_power();
+
+    // Checking for wake up reason
+    esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
+
+    if(wakeup_reason == ESP_SLEEP_WAKEUP_GPIO) {
+        USBSerial.println("Woke up by Touch!");
+    } else {
+        USBSerial.println("Normal Power On");
+    }
+    init_touch();
+    
 
     // BLACK screen
     lv_obj_set_style_bg_color(lv_scr_act(), lv_color_hex(BLACK), LV_PART_MAIN);
@@ -67,6 +74,15 @@ void setup(void) {
         backgroundUpdate,
         "Background update",
         8192,
+        NULL,
+        1,
+        NULL
+    );
+
+    xTaskCreate(
+        backgroundUptime,
+        "Uptime updater",
+        1024,
         NULL,
         1,
         NULL

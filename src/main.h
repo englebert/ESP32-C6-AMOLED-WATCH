@@ -15,7 +15,7 @@
 #include "XPowersLib.h"
 #include "HWCDC.h"
 
-
+extern time_t bootuptime;
 extern HWCDC USBSerial;
 extern std::shared_ptr<Arduino_IIC_DriveBus> IIC_Bus;
 
@@ -25,6 +25,8 @@ extern std::shared_ptr<Arduino_IIC_DriveBus> IIC_Bus;
 #include "display.h"
 #include "page.h"
 #include "power.h"
+
+#include "watchface01.h"
 
 /**
 void adcOn(void);

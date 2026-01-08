@@ -11,6 +11,7 @@ extern lv_display_t *disp;
 extern lv_color_t *disp_draw_buf;
 extern Arduino_DataBus *bus;
 extern Arduino_GFX *gfx;
+extern bool display_status;
 
 void init_display(void);
 void disp_flush(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map);
