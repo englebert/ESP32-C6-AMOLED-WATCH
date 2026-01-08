@@ -3,7 +3,6 @@
 
 HWCDC USBSerial;
 
-XPowersPMU power;
 lv_obj_t *info_label;
 
 lv_obj_t *label;  // Global label object
@@ -54,7 +53,8 @@ void setup(void) {
 
     init_touch();
     init_rtc();
-    init_display(); 
+    init_display();
+    init_power();
 
     // BLACK screen
     lv_obj_set_style_bg_color(lv_scr_act(), lv_color_hex(BLACK), LV_PART_MAIN);

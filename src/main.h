@@ -24,8 +24,11 @@ extern std::shared_ptr<Arduino_IIC_DriveBus> IIC_Bus;
 #include "rtc.h"
 #include "display.h"
 #include "page.h"
+#include "power.h"
 
+/**
 void adcOn(void);
 void adcOff(void);
+ **/
 
 #endif
