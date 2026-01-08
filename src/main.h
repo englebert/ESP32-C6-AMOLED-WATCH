@@ -27,6 +27,7 @@ extern std::shared_ptr<Arduino_IIC_DriveBus> IIC_Bus;
 #include "power.h"
 
 #include "watchface01.h"
+#include "watchface02.h"
 
 /**
 void adcOn(void);
