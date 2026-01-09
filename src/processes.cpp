@@ -20,6 +20,18 @@ void backgroundUpdate(void *pvParameters) {
 
         // Main watch face
         if(page == 0) {
+            if((uint32_t)(millis() - last_update) > 100) {
+                if(page_change) {
+                    page_change = false;
+                    gfx->flush();
+                    gfx->fillScreen(BLACK);
+                }
+
+                show_watchface00();
+
+                last_update = millis();
+            }
+        } if(page == 1) {
             if((uint32_t)(millis() - last_update) > 500) {
                 if(page_change) {
                     page_change = false;
@@ -31,7 +43,7 @@ void backgroundUpdate(void *pvParameters) {
 
                 last_update = millis();
             }
-        } else if(page == 1) {
+        } else if(page == 2) {
             if((uint32_t)(millis() - last_update) > 500) {
                 if(page_change) {
                     page_change = false;
@@ -43,7 +55,7 @@ void backgroundUpdate(void *pvParameters) {
                 
                 last_update = millis();
             }
-        } else if(page == 2) {
+        } else if(page == 3) {
             gfx->setCursor(random(gfx->width()), random(gfx->height()));
             gfx->setTextColor(random(0xffff), random(0xffff));
             gfx->setTextSize(random(6) /* x scale */, random(6) /* y scale */, random(2) /* pixel_margin */);

@@ -1,4 +1,4 @@
-include <Arduino.h>
+#include <Arduino.h>
 #include "main.h"
 
 HWCDC USBSerial;
@@ -61,8 +61,7 @@ void setup(void) {
         USBSerial.println("Normal Power On");
     }
     init_touch();
-    
-
+   
     // BLACK screen
     lv_obj_set_style_bg_color(lv_scr_act(), lv_color_hex(BLACK), LV_PART_MAIN);
 
