@@ -53,7 +53,7 @@ void backgroundUpdate(void *pvParameters) {
             }
 
             // HANDLE UPDATES (Run every 100ms)
-            if((uint32_t)(millis() - last_update) > 100) {
+            if((uint32_t)(millis() - last_update) > 50) {
                 update_watchface_analog();
                 last_update = millis();
             }
