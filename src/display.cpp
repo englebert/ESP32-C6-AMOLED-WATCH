@@ -77,25 +77,25 @@ void gesture_event_cb(lv_event_t * e) {
         lv_dir_t dir = lv_indev_get_gesture_dir(lv_indev_get_act());
         switch(dir) {
             case LV_DIR_LEFT:
-                USBSerial.println("Gesture: Swipe Left");
+                // USBSerial.println("Gesture: Swipe Left");
                 page--;
                 page_change = true;
                 if(page < 0) page = 0;
                 break;
 
             case LV_DIR_RIGHT:
-                USBSerial.println("Gesture: Swipe Right");
+                // USBSerial.println("Gesture: Swipe Right");
                 page++;
                 page_change = true;
                 if(page > page_max) page = 0;
                 break;
 
             case LV_DIR_TOP:
-                USBSerial.println("Gesture: Swipe Up");
+                // USBSerial.println("Gesture: Swipe Up");
                 break;
 
             case LV_DIR_BOTTOM:
-                USBSerial.println("Gesture: Swipe Down");
+                // USBSerial.println("Gesture: Swipe Down");
                 break;
         }
     }

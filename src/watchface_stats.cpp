@@ -16,6 +16,7 @@ static lv_obj_t *ui_VBusVolLabel   = NULL;
 static lv_obj_t *ui_SysVolLabel    = NULL;
 static lv_obj_t *ui_TempLabel      = NULL;
 static lv_obj_t *ui_ChargingLabel  = NULL;
+static lv_obj_t *ui_DisplayLabel   = NULL;
 
 // Helper to format time
 static char buffer[64];
@@ -131,6 +132,13 @@ void load_watchface_stats() {
     lv_obj_set_style_text_font(ui_ChargingLabel, &lv_font_montserrat_24, LV_PART_MAIN); 
     lv_obj_set_style_text_color(ui_ChargingLabel, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
     lv_label_set_text(ui_ChargingLabel, "");
+
+    ui_DisplayLabel = lv_label_create(ui_Container);
+    lv_obj_align(ui_DisplayLabel, LV_ALIGN_TOP_LEFT, 0, y+=24);
+    lv_obj_set_style_text_font(ui_DisplayLabel, &lv_font_montserrat_24, LV_PART_MAIN); 
+    lv_obj_set_style_text_color(ui_DisplayLabel, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
+    sprintf(buffer, "Screen Resolution: %d x %d", LCD_WIDTH, LCD_HEIGHT);
+    lv_label_set_text(ui_DisplayLabel, buffer);
 
     // Force an immediate update
     update_watchface_stats();

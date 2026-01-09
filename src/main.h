@@ -28,6 +28,7 @@ extern std::shared_ptr<Arduino_IIC_DriveBus> IIC_Bus;
 
 #include "watchface_graphical.h"
 #include "watchface_stats.h"
+#include "watchface_analog.h"
 
 /**
 void adcOn(void);

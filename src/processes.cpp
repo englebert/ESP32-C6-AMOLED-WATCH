@@ -22,7 +22,7 @@ void backgroundUpdate(void *pvParameters) {
         }
 
         // Main watch face
-        if(page == 2) {
+        if(page == 3) {
             gfx->setCursor(random(gfx->width()), random(gfx->height()));
             gfx->setTextColor(random(0xffff), random(0xffff));
             gfx->setTextSize(random(6) /* x scale */, random(6) /* y scale */, random(2) /* pixel_margin */);
@@ -44,6 +44,20 @@ void backgroundUpdate(void *pvParameters) {
                 last_update = millis();
             }
         } else if(page == 1) {
+            if(page_change) {
+                page_change = false;
+                gfx->fillScreen(BLACK);
+
+                // Build the LVGL UI
+                load_watchface_analog();
+            }
+
+            // HANDLE UPDATES (Run every 100ms)
+            if((uint32_t)(millis() - last_update) > 100) {
+                update_watchface_analog();
+                last_update = millis();
+            }
+        } else if(page == 2) {
             if(page_change) {
                 page_change = false;
                 gfx->fillScreen(BLACK);

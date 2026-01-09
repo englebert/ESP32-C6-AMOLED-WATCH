@@ -104,7 +104,7 @@ void touchpad_read(lv_indev_t *indev, lv_indev_data_t *data) {
             data->point.y = touch_y;
             
             // Optional debug to see the smooth stream
-            USBSerial.printf("[Touch] x: %d, y: %d, fingers: %d\n", touch_x, touch_y, fingers);
+            // USBSerial.printf("[Touch] x: %d, y: %d, fingers: %d\n", touch_x, touch_y, fingers);
         } else {
             // Register says 0 fingers, so we are released
             data->state = LV_INDEV_STATE_REL;

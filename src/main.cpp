@@ -38,7 +38,7 @@ void setup(void) {
     USBSerial.begin(115200);
     delay(50);
 
-    USBSerial.println("[My Watch 1.0]");
+    // USBSerial.println("[My Watch 1.0]");
     String LVGL_Arduino =
         String('V') + 
         lv_version_major() + "." + 
@@ -87,7 +87,7 @@ void setup(void) {
         NULL
     );
 
-    USBSerial.println("Setup - OK");
+    // USBSerial.println("Setup - OK");
 }
 
 void loop() {
