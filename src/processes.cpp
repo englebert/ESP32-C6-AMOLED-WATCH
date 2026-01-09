@@ -11,6 +11,9 @@ void backgroundUpdate(void *pvParameters) {
     uint32_t last_update = millis();
     lv_obj_t *label = lv_label_create(lv_scr_act());
 
+    // Initially force it update
+    page_change = true;
+
     for(;;) {
         lv_task_handler();
 
@@ -19,49 +22,41 @@ void backgroundUpdate(void *pvParameters) {
         }
 
         // Main watch face
-        if(page == 0) {
-            if((uint32_t)(millis() - last_update) > 100) {
-                if(page_change) {
-                    page_change = false;
-                    gfx->flush();
-                    gfx->fillScreen(BLACK);
-                }
-
-                show_watchface00();
-
-                last_update = millis();
-            }
-        } if(page == 1) {
-            if((uint32_t)(millis() - last_update) > 500) {
-                if(page_change) {
-                    page_change = false;
-                    gfx->flush();
-                    gfx->fillScreen(BLACK);
-                }
-
-                show_watchface01(label);
-
-                last_update = millis();
-            }
-        } else if(page == 2) {
-            if((uint32_t)(millis() - last_update) > 500) {
-                if(page_change) {
-                    page_change = false;
-                    gfx->flush();
-                    gfx->fillScreen(BLACK);
-                }
-
-                show_watchface02(label);
-                
-                last_update = millis();
-            }
-        } else if(page == 3) {
+        if(page == 2) {
             gfx->setCursor(random(gfx->width()), random(gfx->height()));
             gfx->setTextColor(random(0xffff), random(0xffff));
             gfx->setTextSize(random(6) /* x scale */, random(6) /* y scale */, random(2) /* pixel_margin */);
             gfx->println("Hello World!");
             
             gfx->flush();
+        } else if(page == 0) {
+            if(page_change) {
+                page_change = false;
+                gfx->fillScreen(BLACK);
+
+                // Build the LVGL UI
+                load_watchface_graphical();
+            }
+
+            // HANDLE UPDATES (Run every 500ms)
+            if((uint32_t)(millis() - last_update) > 500) {
+                update_watchface_graphical();
+                last_update = millis();
+            }
+        } else if(page == 1) {
+            if(page_change) {
+                page_change = false;
+                gfx->fillScreen(BLACK);
+
+                // Build the LVGL UI
+                load_watchface_stats();
+            }
+
+            // HANDLE UPDATES (Run every 500ms)
+            if((uint32_t)(millis() - last_update) > 500) {
+                update_watchface_stats();
+                last_update = millis();
+            }
         } else {
             gfx->flush();
             gfx->fillScreen(BLACK);
