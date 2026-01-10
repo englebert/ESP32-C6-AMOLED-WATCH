@@ -4,7 +4,7 @@
 // Screen Constants
 #define SCREEN_WIDTH  410
 #define SCREEN_HEIGHT 502
-#define FACE_SIZE     410  // Diameter of the clock face
+#define FACE_SIZE     400  // Diameter of the clock face
 
 static lv_obj_t *ui_Bg = NULL;
 static lv_obj_t *ui_Face = NULL;
@@ -68,7 +68,7 @@ void load_watchface_analog() {
         lv_obj_set_style_bg_color(tick, lv_color_hex(is_major ? 0xFFFFFF : 0x808080), LV_PART_MAIN);
         lv_obj_set_style_border_width(tick, 0, LV_PART_MAIN);
         
-        lv_obj_align(tick, LV_ALIGN_TOP_MID, 0, 10); 
+        lv_obj_align(tick, LV_ALIGN_TOP_MID, 0, -8); 
         
         lv_obj_set_style_transform_pivot_x(tick, w/2, LV_PART_MAIN);
         lv_obj_set_style_transform_pivot_y(tick, (FACE_SIZE/2) - 10, LV_PART_MAIN);
