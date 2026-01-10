@@ -80,7 +80,7 @@ void gesture_event_cb(lv_event_t * e) {
                 // USBSerial.println("Gesture: Swipe Left");
                 page--;
                 page_change = true;
-                if(page < 0) page = 0;
+                if(page < 0) page = page_max;
                 break;
 
             case LV_DIR_RIGHT:
@@ -92,11 +92,23 @@ void gesture_event_cb(lv_event_t * e) {
 
             case LV_DIR_TOP:
                 // USBSerial.println("Gesture: Swipe Up");
+                // Only have action if is watchface
+                if(page == 0) {
+                    watchface++;
+                    watchface_change = true;
+                    if(watchface > watchface_max) watchface = 0;
+                }
                 break;
 
             case LV_DIR_BOTTOM:
                 // USBSerial.println("Gesture: Swipe Down");
-                break;
+                // Only have action if is watchface
+                if(page == 0) {
+                    watchface--;
+                    watchface_change = true;
+                    if(watchface < 0) watchface = watchface_max;
+                    break;
+                }
         }
     }
 }

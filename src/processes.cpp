@@ -22,7 +22,7 @@ void backgroundUpdate(void *pvParameters) {
         }
 
         // Main watch face
-        if(page == 3) {
+        if(page == 2) {
             gfx->setCursor(random(gfx->width()), random(gfx->height()));
             gfx->setTextColor(random(0xffff), random(0xffff));
             gfx->setTextSize(random(6) /* x scale */, random(6) /* y scale */, random(2) /* pixel_margin */);
@@ -30,34 +30,33 @@ void backgroundUpdate(void *pvParameters) {
             
             gfx->flush();
         } else if(page == 0) {
-            if(page_change) {
+            if(page_change || watchface_change) {
                 page_change = false;
+                watchface_change = false;
                 gfx->fillScreen(BLACK);
 
                 // Build the LVGL UI
-                load_watchface_graphical();
+                if(watchface == 0) {
+                    load_watchface_graphical();
+                } else if(watchface == 1) {
+                    load_watchface_analog();
+                }
             }
 
             // HANDLE UPDATES (Run every 500ms)
-            if((uint32_t)(millis() - last_update) > 500) {
-                update_watchface_graphical();
-                last_update = millis();
+            if(watchface == 0) {
+                if((uint32_t)(millis() - last_update) > 500) {
+                    update_watchface_graphical();
+                    last_update = millis();
+                }
+            } else if(watchface == 1) {
+                // HANDLE UPDATES (Run every 100ms)
+                if((uint32_t)(millis() - last_update) > 100) {
+                    update_watchface_analog();
+                    last_update = millis();
+                }
             }
         } else if(page == 1) {
-            if(page_change) {
-                page_change = false;
-                gfx->fillScreen(BLACK);
-
-                // Build the LVGL UI
-                load_watchface_analog();
-            }
-
-            // HANDLE UPDATES (Run every 100ms)
-            if((uint32_t)(millis() - last_update) > 50) {
-                update_watchface_analog();
-                last_update = millis();
-            }
-        } else if(page == 2) {
             if(page_change) {
                 page_change = false;
                 gfx->fillScreen(BLACK);
