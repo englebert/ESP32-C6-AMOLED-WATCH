@@ -42,6 +42,8 @@ void backgroundUpdate(void *pvParameters) {
                     load_watchface_analog();
                 } else if(watchface == 2) {
                     load_watchface_analog_simple();
+                } else if(watchface == 3) {
+                    load_watchface_terminal();
                 }
             }
 
@@ -61,6 +63,12 @@ void backgroundUpdate(void *pvParameters) {
                 // HANDLE UPDATES (Run every 100ms)
                 if((uint32_t)(millis() - last_update) > 100) {
                     update_watchface_analog_simple();
+                    last_update = millis();
+                }
+            } else if(watchface == 3) {
+                // Update FAST (50ms) for typing effect
+                if((uint32_t)(millis() - last_update) > 50) {
+                    update_watchface_terminal();
                     last_update = millis();
                 }
             }

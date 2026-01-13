@@ -72,7 +72,7 @@ void setup(void) {
     xTaskCreate(
         backgroundUpdate,
         "Background update",
-        8192,
+        16384,
         NULL,
         1,
         NULL
