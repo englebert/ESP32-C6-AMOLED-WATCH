@@ -87,6 +87,15 @@ void setup(void) {
         NULL
     );
 
+    xTaskCreate(
+        backgroundSyncTime,
+        "Sync Time",
+        8192,
+        NULL,
+        1,
+        NULL
+    );
+
     // USBSerial.println("Setup - OK");
 }
 

@@ -6,5 +6,5 @@ int page_max = 2;
 bool page_change = false;
 
 int watchface = 0;
-int watchface_max = 1;
+int watchface_max = 2;
 bool watchface_change = false;

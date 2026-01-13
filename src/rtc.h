@@ -6,5 +6,6 @@
 extern SensorPCF85063 rtc;
 
 void init_rtc(void);
+void syncTimeFromRTC(void);
 
 #endif
