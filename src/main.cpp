@@ -60,7 +60,9 @@ void setup(void) {
     } else {
         USBSerial.println("Normal Power On");
     }
+
     init_touch();
+    init_imu();
    
     // BLACK screen
     lv_obj_set_style_bg_color(lv_scr_act(), lv_color_hex(BLACK), LV_PART_MAIN);

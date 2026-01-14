@@ -19,7 +19,7 @@ void init_touch(void) {
     // Touchpad: Start to initialize FT3168
     while(FT3168->begin() == false) {
         USBSerial.println("FT3168 Failed.");
-        delay(10);
+        delay(50);
     }
     USBSerial.println("FT3168 OK");
 

@@ -8,5 +8,7 @@ void load_watchface_analog_simple();
 
 // Called every loop to rotate the hands
 void update_watchface_analog_simple();
+const char* get_batt_symbol(int pct, bool charging);
+
 
 #endif

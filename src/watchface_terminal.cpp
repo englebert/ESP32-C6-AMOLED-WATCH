@@ -1,181 +1,219 @@
 #include "watchface_terminal.h"
+// #include <Wire.h> // Needed for I2C scan
 
 // --- UI Objects ---
 static lv_obj_t *ui_Bg = NULL;
-static lv_obj_t *ui_StatusBar = NULL;
-static lv_obj_t *ui_BattIcon = NULL;
-static lv_obj_t *ui_BattPct = NULL;
-
-static lv_obj_t *ui_ConsoleGroup = NULL;
-static lv_obj_t *ui_LinePrompt = NULL; // "root@watch:~# date"
-static lv_obj_t *ui_LineOutput = NULL; // The date string being typed
-static lv_obj_t *ui_LineCursor = NULL; // The blinking cursor / next prompt
+static lv_obj_t *ui_Container = NULL;
+static lv_obj_t *ui_LinePrompt = NULL; 
+static lv_obj_t *ui_LineOutput = NULL; 
+static lv_obj_t *ui_LineCursor = NULL; 
 
 // --- Logic State ---
-static char target_date_str[64];   // The full string we want to display
-static char current_typed_str[64]; // What is currently displayed
-static int  typing_index = 0;      // Current character position
-static bool is_typing = false;
-static int  prev_minute = -1;      // To trigger re-typing on minute change
+enum TerminalState {
+    STATE_TYPING_CMD,
+    STATE_TYPING_OUTPUT,
+    STATE_WAITING
+};
 
-// --- Helpers ---
+static TerminalState current_state = STATE_TYPING_CMD;
 
-// Get the correct battery icon symbol based on percentage
-const char* get_batt_symbol(int pct, bool charging) {
-    if(charging) return LV_SYMBOL_CHARGE;
-    if(pct >= 90) return LV_SYMBOL_BATTERY_FULL;
-    if(pct >= 70) return LV_SYMBOL_BATTERY_3;
-    if(pct >= 50) return LV_SYMBOL_BATTERY_2;
-    if(pct >= 20) return LV_SYMBOL_BATTERY_1;
-    return LV_SYMBOL_BATTERY_EMPTY;
+// Buffers
+static char full_output_text[512]; // Storage for the complete multi-line info
+static char current_output_buf[512]; // Buffer for animation
+static char current_cmd_buf[64];     // Buffer for command line
+static int  type_idx = 0;            // Current character index
+static uint32_t state_timer = 0;     // Timer for delays
+
+static const char* PROMPT_PREFIX = "root@watch:~# ";
+static const char* CMD_TEXT = "./sys_info.sh";
+
+// --- Styles ---
+static lv_style_t style_prompt; // Yellow
+static lv_style_t style_output; // Light Grey (Monospaced preferred if available)
+static bool style_initialized = false;
+
+// --- Helper: I2C Scan ---
+// Scans the bus and returns a comma-separated string of found addresses
+void get_i2c_devices(char* out_str) {
+    int found = 0;
+    out_str[0] = '\0'; // Clear string
+
+    for(uint8_t address = 1; address < 127; address++) {
+        Wire.beginTransmission(address);
+        uint8_t error = Wire.endTransmission();
+
+        if (error == 0) {
+            char addr_buf[10];
+            if(found > 0) strcat(out_str, ", ");
+            sprintf(addr_buf, "0x%02X", address);
+            strcat(out_str, addr_buf);
+            found++;
+        }
+    }
+    if(found == 0) strcpy(out_str, "None");
+}
+
+void reset_terminal_cycle() {
+    // 1. Reset State
+    current_state = STATE_TYPING_CMD;
+    type_idx = 0;
+    current_output_buf[0] = '\0';
+    
+    // 2. Clear UI
+    lv_label_set_text(ui_LinePrompt, PROMPT_PREFIX); 
+    lv_label_set_text(ui_LineOutput, "");
+    lv_label_set_text(ui_LineCursor, "");
+    
+    // 3. Gather System Info
+    struct tm timeinfo;
+    char date_str[32];
+    char time_str[32];
+    
+    if (getLocalTime(&timeinfo)) {
+        strftime(date_str, sizeof(date_str), "%a %d %b %Y", &timeinfo);
+        strftime(time_str, sizeof(time_str), "%H:%M:%S", &timeinfo);
+    } else {
+        strcpy(date_str, "---");
+        strcpy(time_str, "---");
+    }
+
+    int batt_pct = power.getBatteryPercent();
+    int batt_mv  = power.getBattVoltage();
+    
+    char i2c_list[64];
+    get_i2c_devices(i2c_list);
+
+    // Format the full output string
+    // We use \n for line breaks
+    sprintf(full_output_text, 
+        "Date   : %s\n"
+        "Time   : %s\n"
+        "Uptime : %d s\n"
+        "Battery: %d mV (%d%%)\n"
+        "I2C Bus: %s",
+        date_str, 
+        time_str, 
+        total_awake_time, // Defined in processes.h
+        batt_mv, 
+        batt_pct,
+        i2c_list
+    );
 }
 
 void load_watchface_terminal() {
     lv_obj_clean(lv_scr_act());
 
-    // 1. Background (Terminal Black)
+    // 1. Initialize Styles
+    if (!style_initialized) {
+        lv_style_init(&style_prompt);
+        lv_style_set_text_color(&style_prompt, lv_color_hex(0xFFFF00)); // Yellow
+        lv_style_set_text_font(&style_prompt, &lv_font_montserrat_20);  // Smaller font to fit more text
+
+        lv_style_init(&style_output);
+        lv_style_set_text_color(&style_output, lv_color_hex(0xCCCCCC)); // Light Grey
+        lv_style_set_text_font(&style_output, &lv_font_montserrat_20); 
+        lv_style_set_text_line_space(&style_output, 8); // Add spacing between lines
+
+        style_initialized = true;
+    }
+
+    // 2. Background
     ui_Bg = lv_obj_create(lv_scr_act());
-    lv_obj_set_size(ui_Bg, 410, 502); // Full Screen
+    lv_obj_set_size(ui_Bg, 410, 502); 
     lv_obj_center(ui_Bg);
     lv_obj_set_style_bg_color(ui_Bg, lv_color_hex(0x000000), LV_PART_MAIN);
     lv_obj_set_style_border_width(ui_Bg, 0, LV_PART_MAIN);
     lv_obj_clear_flag(ui_Bg, LV_OBJ_FLAG_SCROLLABLE);
 
-    // 2. Top Status Bar (Grey strip for battery)
-    ui_StatusBar = lv_obj_create(ui_Bg);
-    lv_obj_set_size(ui_StatusBar, 410, 30);
-    lv_obj_align(ui_StatusBar, LV_ALIGN_TOP_MID, 0, 0);
-    lv_obj_set_style_bg_color(ui_StatusBar, lv_color_hex(0x202020), LV_PART_MAIN);
-    lv_obj_set_style_border_width(ui_StatusBar, 0, LV_PART_MAIN);
+    // 3. Container for text (Padding)
+    ui_Container = lv_obj_create(ui_Bg);
+    lv_obj_set_size(ui_Container, 390, 480);
+    lv_obj_center(ui_Container);
+    lv_obj_set_style_bg_color(ui_Container, lv_color_hex(0x000000), LV_PART_MAIN);
+    lv_obj_set_style_border_width(ui_Container, 0, LV_PART_MAIN);
+    lv_obj_set_flex_flow(ui_Container, LV_FLEX_FLOW_COLUMN); // Auto-layout items vertically
     
-    // Battery Percentage
-    ui_BattPct = lv_label_create(ui_StatusBar);
-    lv_obj_align(ui_BattPct, LV_ALIGN_RIGHT_MID, -5, 0);
-    lv_obj_set_style_text_color(ui_BattPct, lv_color_hex(0xFFFFFF), 0);
-    lv_obj_set_style_text_font(ui_BattPct, &lv_font_montserrat_14, 0);
-    lv_label_set_text(ui_BattPct, "100%");
-
-    // Battery Icon
-    ui_BattIcon = lv_label_create(ui_StatusBar);
-    lv_obj_align(ui_BattIcon, LV_ALIGN_RIGHT_MID, -45, 0); // Left of percentage
-    lv_obj_set_style_text_color(ui_BattIcon, lv_color_hex(0xFFFFFF), 0);
-    lv_label_set_text(ui_BattIcon, LV_SYMBOL_BATTERY_FULL);
-
-    // 3. Console Group (Container for text)
-    ui_ConsoleGroup = lv_obj_create(ui_Bg);
-    lv_obj_set_size(ui_ConsoleGroup, 400, 460);
-    lv_obj_align(ui_ConsoleGroup, LV_ALIGN_TOP_LEFT, 5, 35); // Below status bar
-    lv_obj_set_style_bg_color(ui_ConsoleGroup, lv_color_hex(0x000000), LV_PART_MAIN);
-    lv_obj_set_style_border_width(ui_ConsoleGroup, 0, LV_PART_MAIN);
+    // Line 1: Prompt
+    ui_LinePrompt = lv_label_create(ui_Container);
+    lv_obj_add_style(ui_LinePrompt, &style_prompt, 0);
+    lv_label_set_long_mode(ui_LinePrompt, LV_LABEL_LONG_WRAP); // Allow wrap
+    lv_obj_set_width(ui_LinePrompt, 380);
     
-    // Style for all terminal text (Green, Monospace-ish look)
-    lv_style_t style_term;
-    lv_style_init(&style_term);
-    lv_style_set_text_color(&style_term, lv_color_hex(0x00FF00)); // Hacker Green
-    lv_style_set_text_font(&style_term, &lv_font_montserrat_20); // Using 20 for readability
+    // Line 2: Output Block
+    ui_LineOutput = lv_label_create(ui_Container);
+    lv_obj_add_style(ui_LineOutput, &style_output, 0);
+    lv_label_set_long_mode(ui_LineOutput, LV_LABEL_LONG_WRAP);
+    lv_obj_set_width(ui_LineOutput, 380);
 
-    // Line 1: The Prompt and Command
-    ui_LinePrompt = lv_label_create(ui_ConsoleGroup);
-    lv_obj_add_style(ui_LinePrompt, &style_term, 0);
-    lv_obj_align(ui_LinePrompt, LV_ALIGN_TOP_LEFT, 0, 0);
-    lv_label_set_text(ui_LinePrompt, "root@watch:~# date");
+    // Line 3: Next Cursor
+    ui_LineCursor = lv_label_create(ui_Container);
+    lv_obj_add_style(ui_LineCursor, &style_prompt, 0);
 
-    // Line 2: The Output (Date/Time)
-    ui_LineOutput = lv_label_create(ui_ConsoleGroup);
-    lv_obj_add_style(ui_LineOutput, &style_term, 0);
-    lv_obj_align(ui_LineOutput, LV_ALIGN_TOP_LEFT, 0, 30);
-    lv_label_set_text(ui_LineOutput, ""); // Start empty
-
-    // Line 3: The Next Prompt (appears after typing)
-    ui_LineCursor = lv_label_create(ui_ConsoleGroup);
-    lv_obj_add_style(ui_LineCursor, &style_term, 0);
-    lv_obj_align(ui_LineCursor, LV_ALIGN_TOP_LEFT, 0, 60);
-    lv_label_set_text(ui_LineCursor, ""); 
-
-    // Reset State
-    typing_index = 0;
-    is_typing = true;
-    prev_minute = -1;
-    
-    // Prepare the text immediately
-    struct tm timeinfo;
-    if (getLocalTime(&timeinfo)) {
-        // Format: "Tue Jan 13 11:53:00 2026"
-        strftime(target_date_str, sizeof(target_date_str), "%a %b %d %H:%M:%S %Y", &timeinfo);
-        prev_minute = timeinfo.tm_min;
-    } else {
-        sprintf(target_date_str, "Time Sync Error...");
-    }
-    
-    update_watchface_terminal();
+    // Start
+    reset_terminal_cycle();
 }
 
 void update_watchface_terminal() {
     if(!ui_LineOutput) return;
 
-    // --- 1. Battery Update Logic ---
-    static uint32_t last_batt = 0;
-    if(millis() - last_batt > 2000) { // Update every 2s
-        last_batt = millis();
-        int pct = power.getBatteryPercent();
-        bool chg = power.isCharging();
+    switch (current_state) {
         
-        lv_label_set_text_fmt(ui_BattPct, "%d%%", pct);
-        lv_label_set_text(ui_BattIcon, get_batt_symbol(pct, chg));
-        
-        // Color code battery
-        if(pct < 20) lv_obj_set_style_text_color(ui_BattPct, lv_color_hex(0xFF0000), 0);
-        else lv_obj_set_style_text_color(ui_BattPct, lv_color_hex(0xFFFFFF), 0);
-    }
-
-    // --- 2. Check for Minute Change (Reset Animation) ---
-    struct tm timeinfo;
-    if (getLocalTime(&timeinfo)) {
-        if(timeinfo.tm_min != prev_minute && !is_typing) {
-            // Minute changed! Restart the typing process
-            prev_minute = timeinfo.tm_min;
-            typing_index = 0;
-            is_typing = true;
-            
-            // Generate new string with current seconds
-            strftime(target_date_str, sizeof(target_date_str), "%a %b %d %H:%M:%S %Y", &timeinfo);
-            
-            // Clear screen lines
-            lv_label_set_text(ui_LineOutput, "");
-            lv_label_set_text(ui_LineCursor, "");
-        }
-    }
-
-    // --- 3. Typing Animation ---
-    if(is_typing) {
-        // Check if we reached the end of the string
-        if(target_date_str[typing_index] == '\0') {
-            is_typing = false;
-            // Show the prompt again at the bottom
-            lv_label_set_text(ui_LineCursor, "root@watch:~# _");
-        } else {
-            // Copy one character
-            current_typed_str[typing_index] = target_date_str[typing_index];
-            current_typed_str[typing_index + 1] = '\0'; // Null terminate
-            
-            // Update Label
-            lv_label_set_text(ui_LineOutput, current_typed_str);
-            
-            // Move to next char
-            typing_index++;
-        }
-    } else {
-        // Blinking Cursor effect when idle
-        static uint32_t cursor_blink = 0;
-        if(millis() - cursor_blink > 800) {
-            cursor_blink = millis();
-            // Toggle cursor
-            const char* txt = lv_label_get_text(ui_LineCursor);
-            if(strcmp(txt, "root@watch:~# _") == 0) {
-                lv_label_set_text(ui_LineCursor, "root@watch:~#");
+        case STATE_TYPING_CMD:
+            // Type "./sys_info.sh"
+            if (CMD_TEXT[type_idx] == '\0') {
+                // Finished command
+                lv_label_set_text_fmt(ui_LinePrompt, "%s%s", PROMPT_PREFIX, CMD_TEXT); 
+                current_state = STATE_TYPING_OUTPUT;
+                type_idx = 0;
             } else {
-                lv_label_set_text(ui_LineCursor, "root@watch:~# _");
+                // Build string: "root@watch:~# ./s_"
+                strcpy(current_cmd_buf, PROMPT_PREFIX);
+                strncat(current_cmd_buf, CMD_TEXT, type_idx + 1);
+                strcat(current_cmd_buf, "_"); 
+                
+                lv_label_set_text(ui_LinePrompt, current_cmd_buf);
+                type_idx++;
             }
-        }
+            break;
+
+        case STATE_TYPING_OUTPUT:
+            // Type the multi-line result char by char
+            if (full_output_text[type_idx] == '\0') {
+                // Done
+                current_state = STATE_WAITING;
+                state_timer = millis();
+                lv_label_set_text(ui_LineCursor, "root@watch:~# _");
+            } else {
+                // Append next char to buffer
+                current_output_buf[type_idx] = full_output_text[type_idx];
+                current_output_buf[type_idx + 1] = '\0';
+                
+                // Add a "block cursor" at the end for effect
+                // (Optional, can just set text directly for faster speed)
+                lv_label_set_text_fmt(ui_LineOutput, "%s_", current_output_buf);
+                
+                // Type faster (increment by 2 or 3 chars per frame if it's too slow)
+                type_idx++; 
+            }
+            break;
+
+        case STATE_WAITING:
+            // Wait 5 seconds before refreshing info
+            if ((uint32_t)(millis() - state_timer) > 5000) {
+                reset_terminal_cycle();
+            } else {
+                // Blink cursor
+                static uint32_t blink_tmr = 0;
+                if ((uint32_t)(millis() - blink_tmr) > 500) {
+                    blink_tmr = millis();
+                    const char* txt = lv_label_get_text(ui_LineCursor);
+                    if (strcmp(txt, "root@watch:~# _") == 0) {
+                        lv_label_set_text(ui_LineCursor, "root@watch:~#");
+                    } else {
+                        lv_label_set_text(ui_LineCursor, "root@watch:~# _");
+                    }
+                }
+            }
+            break;
     }
 }

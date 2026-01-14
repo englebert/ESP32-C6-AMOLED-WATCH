@@ -50,9 +50,16 @@ void modeSleep(void) {
             Arduino_IIC_Touch::Device_Mode::TOUCH_POWER_MONITOR
         );
     }
+    
+    // Prepare IMU for Sleep
+    enable_imu_wakeup();
 
     // Light sleep uses 'gpio_wakeup_enable', NOT 'esp_deep_sleep...'
-    gpio_wakeup_enable((gpio_num_t)TP_INT, GPIO_INTR_LOW_LEVEL);
+    // gpio_wakeup_enable((gpio_num_t)TP_INT, GPIO_INTR_LOW_LEVEL);
+
+    // Wake on IMU Motion (IO connected to IMU_INT)
+    // configured the IMU to drop LOW on movement
+    gpio_wakeup_enable((gpio_num_t)IMU_INT1, GPIO_INTR_LOW_LEVEL);
 
     // Enable GPIO wake-up feature for Light Sleep
     esp_sleep_enable_gpio_wakeup();
@@ -66,11 +73,17 @@ void modeSleep(void) {
     awake_time = 0;
     display_status = true;
 
+
+    init_touch();
+
+    // IMPORTANT: Restore IMU to normal mode (Gyro/Accel active)
+    // configWakeOnMotion disabled the Gyro and put Accel in low power.
+    // This need to re-init to use it for other things (like games or pedometer).
+    init_imu();
+
     if(gfx)
         gfx->displayOn();
 
     // Turn on backlight
     power.enableBLDO1();
-
-    init_touch();
 }

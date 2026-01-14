@@ -12,6 +12,7 @@
 #include "Arduino_DriveBus_Library.h"
 #include "lv_conf.h"
 #include "SensorPCF85063.hpp"
+#include "SensorQMI8658.hpp"
 #include "XPowersLib.h"
 #include "HWCDC.h"
 
@@ -25,6 +26,7 @@ extern std::shared_ptr<Arduino_IIC_DriveBus> IIC_Bus;
 #include "display.h"
 #include "page.h"
 #include "power.h"
+#include "imu.h"
 
 #include "watchface_graphical.h"
 #include "watchface_stats.h"

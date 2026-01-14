@@ -14,8 +14,19 @@ static lv_obj_t *ui_SecHand = NULL;
 static lv_obj_t *ui_CenterDot = NULL;
 static lv_obj_t *ui_DateLabel = NULL;
 static lv_obj_t *ui_BattLabel = NULL;
+static lv_obj_t *ui_BattIcon = NULL;
 
 static char date_buffer[32];
+
+// Get the correct battery icon symbol based on percentage
+const char* get_batt_symbol(int pct, bool charging) {
+    if(charging) return LV_SYMBOL_CHARGE;
+    if(pct >= 90) return LV_SYMBOL_BATTERY_FULL;
+    if(pct >= 70) return LV_SYMBOL_BATTERY_3;
+    if(pct >= 50) return LV_SYMBOL_BATTERY_2;
+    if(pct >= 20) return LV_SYMBOL_BATTERY_1;
+    return LV_SYMBOL_BATTERY_EMPTY;
+}
 
 /**
  * Helper to create a hand
@@ -100,9 +111,15 @@ void load_watchface_analog_simple() {
 
     // Battery Label
     ui_BattLabel = lv_label_create(ui_Bg);
-    lv_obj_align(ui_BattLabel, LV_ALIGN_TOP_RIGHT, -20, 10);
+    lv_obj_align(ui_BattLabel, LV_ALIGN_TOP_RIGHT, -20, 5);
     lv_obj_set_style_text_font(ui_BattLabel, &lv_font_montserrat_22, LV_PART_MAIN);
     lv_label_set_text(ui_BattLabel, "");
+
+    // Battery Icon
+    ui_BattIcon = lv_label_create(ui_Bg);
+    lv_obj_align(ui_BattIcon, LV_ALIGN_TOP_RIGHT, -85, 10);
+    lv_obj_set_style_text_color(ui_BattIcon, lv_color_hex(0xFFFFFF), 0);
+    lv_label_set_text(ui_BattIcon, LV_SYMBOL_BATTERY_FULL);
 
     update_watchface_analog_simple();
 }
@@ -135,7 +152,9 @@ void update_watchface_analog_simple() {
         }
 
         int batt = power.getBatteryPercent();
+        bool chg = power.isCharging();
         lv_label_set_text_fmt(ui_BattLabel, "%d%%", batt);
+        lv_label_set_text(ui_BattIcon, get_batt_symbol(batt, chg));
         
         if(batt < 20) {
             lv_obj_set_style_text_color(ui_BattLabel, lv_color_hex(0xFF0000), LV_PART_MAIN);

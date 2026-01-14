@@ -4,35 +4,50 @@
 uint32_t total_awake_time = 0;
 uint32_t awake_time = 0;
 
-
 void backgroundUpdate(void *pvParameters) {
     (void) pvParameters;
 
     uint32_t last_update = millis();
-    lv_obj_t *label = lv_label_create(lv_scr_act());
+    
+    // --- FIX 1: Removed the "Ghost" label creation here ---
+    // lv_obj_t *label = lv_label_create(lv_scr_act()); 
 
-    // Initially force it update
+    // Initially force an update
     page_change = true;
 
     for(;;) {
+        // Let LVGL manage the UI (inputs, animations, etc.)
         lv_task_handler();
 
         if(awake_time > 30) {
             modeSleep();
         }
 
-        // Main watch face
+        // --- Page 2: Hello World (GFX) ---
         if(page == 2) {
+            // --- FIX 2: Handle Page Entry for Page 2 ---
+            if(page_change) {
+                page_change = false;
+                // Clean any LVGL objects from previous pages so they don't render in background
+                lv_obj_clean(lv_scr_act()); 
+                gfx->fillScreen(BLACK);
+            }
+
+            // Draw Random Text
             gfx->setCursor(random(gfx->width()), random(gfx->height()));
             gfx->setTextColor(random(0xffff), random(0xffff));
-            gfx->setTextSize(random(6) /* x scale */, random(6) /* y scale */, random(2) /* pixel_margin */);
+            gfx->setTextSize(random(6), random(6), random(2));
             gfx->println("Hello World!");
-            
             gfx->flush();
-        } else if(page == 0) {
+        } 
+        
+        // --- Page 0: Main Watchfaces (LVGL) ---
+        else if(page == 0) {
             if(page_change || watchface_change) {
                 page_change = false;
                 watchface_change = false;
+                
+                // Clear GFX screen to ensure clean background
                 gfx->fillScreen(BLACK);
 
                 // Build the LVGL UI
@@ -47,46 +62,49 @@ void backgroundUpdate(void *pvParameters) {
                 }
             }
 
-            // HANDLE UPDATES (Run every 500ms)
+            // HANDLE UPDATES
             if(watchface == 0) {
                 if((uint32_t)(millis() - last_update) > 500) {
                     update_watchface_graphical();
                     last_update = millis();
                 }
             } else if(watchface == 1) {
-                // HANDLE UPDATES (Run every 100ms)
                 if((uint32_t)(millis() - last_update) > 100) {
                     update_watchface_analog();
                     last_update = millis();
                 }
             } else if(watchface == 2) {
-                // HANDLE UPDATES (Run every 100ms)
                 if((uint32_t)(millis() - last_update) > 100) {
                     update_watchface_analog_simple();
                     last_update = millis();
                 }
             } else if(watchface == 3) {
                 // Update FAST (50ms) for typing effect
-                if((uint32_t)(millis() - last_update) > 50) {
+                if((uint32_t)(millis() - last_update) > 30) {
                     update_watchface_terminal();
                     last_update = millis();
                 }
             }
-        } else if(page == 1) {
+        } 
+        
+        // --- Page 1: Stats (LVGL) ---
+        else if(page == 1) {
             if(page_change) {
                 page_change = false;
                 gfx->fillScreen(BLACK);
-
-                // Build the LVGL UI
+                // Load Stats UI
                 load_watchface_stats();
             }
 
-            // HANDLE UPDATES (Run every 500ms)
+            // Update Stats
             if((uint32_t)(millis() - last_update) > 500) {
                 update_watchface_stats();
                 last_update = millis();
             }
-        } else {
+        } 
+        
+        // --- Fallback/Error ---
+        else {
             gfx->flush();
             gfx->fillScreen(BLACK);
         }
@@ -124,13 +142,9 @@ void backgroundSyncTime(void *pvParameters) {
             last_update = millis();
         }
 
-        // if(awake_time == 0 && total_awake_time > 60)  {
         if(awake_time == 0)  {
             syncTimeFromRTC();
             USBSerial.println("Sync time after wake up.");
-            // USBSerial.print("Display: "); USBSerial.println(display_status);
-            // USBSerial.print("awake time: "); USBSerial.println(awake_time++);
-            // To delay for at least 1 second later
             vTaskDelay(2000);
             seconds_to_resync = 0;
         }
