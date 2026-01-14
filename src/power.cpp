@@ -14,8 +14,8 @@ void init_power(void) {
     );
 
     // Ensure AMOLED power is ON and STABLE
-    power.setBLDO1Voltage(3300); // Set to 3.3V (or 3000 depending on board spec)
-    power.enableBLDO1();
+    // power.setBLDO1Voltage(3000); // Set to 3.3V (or 3000 depending on board spec)
+    // power.enableBLDO1();
 
     adcOn();
 }

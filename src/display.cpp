@@ -8,6 +8,8 @@ lv_display_t *disp;
 lv_color_t *disp_draw_buf;
 bool display_status = true;
 
+static uint8_t _current_brightness = 100;
+
 Arduino_DataBus *bus = new Arduino_ESP32QSPI(
     LCD_CS,
     LCD_SCLK,
@@ -141,14 +143,18 @@ void disp_flush(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map) {
 void setBrightness(uint8_t percent) {
     if (percent > 100) percent = 100;
 
-    // AMOLED brightness is usually 0-255
-    uint8_t brightness = map(percent, 0, 100, 0, 255);
+    // 2. SAVE the value here
+    _current_brightness = percent;
 
-    // Send Command 0x51 (Write Display Brightness)
+    // Map to 0-255
+    uint8_t val = map(percent, 0, 100, 0, 255);
+
     bus->beginWrite();
-    bus->writeCommand(0x51); 
-    bus->write(brightness);
+    bus->writeC8D8(CO5300_W_WDBRIGHTNESSVALNOR, val);
     bus->endWrite();
-    
-    USBSerial.printf("Brightness set to: %d (Raw: %d)\n", percent, brightness);
+    // USBSerial.printf("Brightness: %d%% (Val: %d)\n", percent, val);
+}
+
+uint8_t getBrightness(void) {
+    return _current_brightness;
 }
