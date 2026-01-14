@@ -138,3 +138,17 @@ void disp_flush(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map) {
     lv_disp_flush_ready(disp);
 }
 
+void setBrightness(uint8_t percent) {
+    if (percent > 100) percent = 100;
+
+    // AMOLED brightness is usually 0-255
+    uint8_t brightness = map(percent, 0, 100, 0, 255);
+
+    // Send Command 0x51 (Write Display Brightness)
+    bus->beginWrite();
+    bus->writeCommand(0x51); 
+    bus->write(brightness);
+    bus->endWrite();
+    
+    USBSerial.printf("Brightness set to: %d (Raw: %d)\n", percent, brightness);
+}

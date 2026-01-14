@@ -17,5 +17,6 @@ void init_display(void);
 void disp_flush(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map);
 void rounder_event_cb(lv_event_t *e);
 void gesture_event_cb(lv_event_t *e);
+void setBrightness(uint8_t percent);
 
 #endif

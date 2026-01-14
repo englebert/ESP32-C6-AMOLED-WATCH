@@ -101,7 +101,22 @@ void backgroundUpdate(void *pvParameters) {
                 update_watchface_stats();
                 last_update = millis();
             }
-        } 
+        }
+
+        // --- NEW PAGE 3: Settings ---
+        else if(page == 3) {
+            if(page_change) {
+                page_change = false;
+                // Clear screen
+                lv_obj_clean(lv_scr_act()); 
+                gfx->fillScreen(BLACK);
+                
+                // Load UI
+                load_watchface_settings();
+            }
+            
+            // No frequent update needed for settings, just let LVGL handle input
+        }
         
         // --- Fallback/Error ---
         else {

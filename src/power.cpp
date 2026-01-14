@@ -13,6 +13,10 @@ void init_power(void) {
         XPOWERS_AXP2101_PKEY_SHORT_IRQ  //POWER KEY
     );
 
+    // Ensure AMOLED power is ON and STABLE
+    power.setBLDO1Voltage(3300); // Set to 3.3V (or 3000 depending on board spec)
+    power.enableBLDO1();
+
     adcOn();
 }
 
@@ -55,7 +59,7 @@ void modeSleep(void) {
     enable_imu_wakeup();
 
     // Light sleep uses 'gpio_wakeup_enable', NOT 'esp_deep_sleep...'
-    // gpio_wakeup_enable((gpio_num_t)TP_INT, GPIO_INTR_LOW_LEVEL);
+    gpio_wakeup_enable((gpio_num_t)TP_INT, GPIO_INTR_LOW_LEVEL);
 
     // Wake on IMU Motion (IO connected to IMU_INT)
     // configured the IMU to drop LOW on movement
