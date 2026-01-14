@@ -52,6 +52,9 @@ void setup(void) {
     init_display();
     init_power();
 
+    // TODO: move this task!!
+    init_wifi_manager();
+
     // Checking for wake up reason
     esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
 
@@ -92,6 +95,15 @@ void setup(void) {
     xTaskCreate(
         backgroundSyncTime,
         "Sync Time",
+        8192,
+        NULL,
+        1,
+        NULL
+    );
+
+    xTaskCreate(
+        backgroundMonitorWiFi,
+        "Monitor WiFi",
         8192,
         NULL,
         1,

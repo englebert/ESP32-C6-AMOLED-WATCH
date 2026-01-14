@@ -99,8 +99,7 @@ void load_watchface_stats() {
                 (uint8_t)chipid >> 16,
                 (uint8_t)chipid >> 24,
                 (uint8_t)chipid >> 32,
-                (uint8_t)chipid >> 40,
-                (uint8_t)chipid >> 48);
+                (uint8_t)chipid >> 40);
     lv_label_set_text(ui_ChipMacLabel, buffer);
 
     ui_BattVolLabel = lv_label_create(ui_Container);

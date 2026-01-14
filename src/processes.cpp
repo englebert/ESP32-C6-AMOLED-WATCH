@@ -117,6 +117,23 @@ void backgroundUpdate(void *pvParameters) {
             
             // No frequent update needed for settings, just let LVGL handle input
         }
+
+        // --- NEW PAGE 4: WiFi Manager ---
+        else if(page == 4) {
+            if(page_change) {
+                page_change = false;
+                lv_obj_clean(lv_scr_act()); 
+                gfx->fillScreen(BLACK);
+                
+                load_watchface_wifi();
+            }
+            
+            // Need to update often to check scan status
+            if((uint32_t)(millis() - last_update) > 200) {
+                update_watchface_wifi();
+                last_update = millis();
+            }
+        }
         
         // --- Fallback/Error ---
         else {
@@ -168,6 +185,20 @@ void backgroundSyncTime(void *pvParameters) {
             syncTimeFromRTC();
             USBSerial.println("Sync time after 600 seconds");
             seconds_to_resync = 0;
+        }
+
+        vTaskDelay(10);
+    }
+}
+
+void backgroundMonitorWiFi(void *pvParameters) {
+    (void) pvParameters;
+
+    uint32_t last_update = millis();
+    for(;;) {
+        if((uint32_t)(millis() - last_update) > 2000) {
+            monitor_wifi();
+            last_update = millis();
         }
 
         vTaskDelay(10);

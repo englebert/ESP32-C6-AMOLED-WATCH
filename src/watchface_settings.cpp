@@ -1,3 +1,4 @@
+#include <Arduino.h>
 #include "watchface_settings.h"
 
 static lv_obj_t *ui_Slider = NULL;

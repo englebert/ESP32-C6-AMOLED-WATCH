@@ -15,6 +15,8 @@
 #include "SensorQMI8658.hpp"
 #include "XPowersLib.h"
 #include "HWCDC.h"
+#include <LittleFS.h>
+#include <vector>
 
 extern time_t bootuptime;
 extern HWCDC USBSerial;
@@ -27,6 +29,7 @@ extern std::shared_ptr<Arduino_IIC_DriveBus> IIC_Bus;
 #include "page.h"
 #include "power.h"
 #include "imu.h"
+#include "wifi_manager.h"
 
 #include "watchface_graphical.h"
 #include "watchface_stats.h"
@@ -34,6 +37,8 @@ extern std::shared_ptr<Arduino_IIC_DriveBus> IIC_Bus;
 #include "watchface_analog_simple.h"
 #include "watchface_terminal.h"
 #include "watchface_settings.h"
+#include "watchface_wifi.h"
+
 
 /**
 void adcOn(void);
