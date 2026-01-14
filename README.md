@@ -1,7 +1,3 @@
-Based on the transition to the **ESP32-C6** and the new features we implemented (Terminal Watchface, Wake-on-Motion), here is the updated `README.md`.
-
----
-
 # ESP32-C6 AMOLED Smartwatch Firmware
 
 A high-performance smartwatch firmware optimized for the **ESP32-C6 (RISC-V)** microcontroller. This project drives a large **1.8" 410x502 AMOLED** display using **QSPI** and features a smooth, gesture-based UI built with **LVGL**.
