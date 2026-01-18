@@ -94,12 +94,12 @@ void load_watchface_stats() {
     lv_obj_set_style_text_color(ui_ChipMacLabel, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
     uint64_t chipid = ESP.getEfuseMac();
     sprintf(buffer, "Mac Address: %02X:%02X:%02X:%02X:%02X:%02X",
-                (uint8_t)chipid,
-                (uint8_t)chipid >> 8,
-                (uint8_t)chipid >> 16,
-                (uint8_t)chipid >> 24,
-                (uint8_t)chipid >> 32,
-                (uint8_t)chipid >> 40);
+                (uint8_t)(chipid),
+                (uint8_t)(chipid >> 8),
+                (uint8_t)(chipid >> 16),
+                (uint8_t)(chipid >> 24),
+                (uint8_t)(chipid >> 32),
+                (uint8_t)(chipid >> 40));
     lv_label_set_text(ui_ChipMacLabel, buffer);
 
     ui_BattVolLabel = lv_label_create(ui_Container);
