@@ -1,11 +1,16 @@
 #include <Arduino.h>
 #include "rtc.h"
-#include <time.h>
+#include "esp_sntp.h"
 
 // Use standard "C" struct tm for time comparisons
 // Define Timezone: UTC+8 (Malaysia/China/Singapore)
-#define GMT_OFFSET_SEC  (8 * 3600) 
+// #define GMT_OFFSET_SEC  (8 * 3600) 
+// #define GMT_OFFSET_SEC  0
 #define DAYLIGHT_OFFSET 0
+#define TIMEZONE_STR    "MYT-8"
+#define NTP_SERVER1     "time.google.com"
+#define NTP_SERVER2     "pool.ntp.org"
+#define NTP_SERVER3     "time.nist.gov"
 
 SensorPCF85063 rtc;
 
@@ -21,6 +26,12 @@ void init_rtc(void) {
     }
     syncTimeFromRTC();
     bootuptime = rtc.hwClockRead();
+}
+
+void init_ntp(void) {
+    configTime(0, 0, NTP_SERVER1, NTP_SERVER2, NTP_SERVER3);    // 0, 0 because we will use TZ in the next line
+    setenv("TZ", TIMEZONE_STR, 1);                              // Set environment variable with your time zone
+    tzset();
 }
 
 void syncTimeFromRTC(void) {
@@ -47,26 +58,46 @@ void syncTimeFromRTC(void) {
 }
 
 void syncNTP(void) {
-    USBSerial.println("NTP: Attempting sync...");
+    USBSerial.println("NTP: Starting Sync Process...");
 
-    // 1. Initialize NTP (Standard Arduino/ESP32 Time Lib)
-    configTime(GMT_OFFSET_SEC, DAYLIGHT_OFFSET, "pool.ntp.org", "time.nist.gov");
-
-    // 2. Wait for NTP Time (Timeout after 3 seconds)
-    struct tm ntp_tm;
-    if (!getLocalTime(&ntp_tm, 3000)) {
-        USBSerial.println("NTP: Failed to fetch time (Timeout)");
+    // 1. Check for WiFi connection first
+    if (WiFi.status() != WL_CONNECTED) {
+        USBSerial.println("NTP: No WiFi connection. Aborting.");
         return;
     }
 
-    USBSerial.println("NTP: Got time! Checking RTC...");
+    // 2. Force SNTP to reset and start a fresh request
+    esp_sntp_stop();
+    esp_sntp_setoperatingmode(SNTP_OPMODE_POLL);
+    esp_sntp_setservername(0, "pool.ntp.org");
+    esp_sntp_setservername(1, "time.google.com");
+    esp_sntp_setservername(2, "time.nist.gov");
+    esp_sntp_init();
 
-    // 3. Get Current RTC Time
-    // (Assuming 'rtc' is the name of your PCF85063 object defined in rtc.cpp)
-    // We need to convert RTC custom struct to standard time_t for easy comparison
-    // SensorPCF85063::DateTime rtc_now = rtc.getDateTime();
-    RTC_DateTime rtc_now = rtc.getDateTime();
+    // 3. WAIT for the sync to complete (Critical Step!)
+    // If we don't wait, getLocalTime just returns the old RTC time immediately.
+    int retry = 0;
+    while (sntp_get_sync_status() != SNTP_SYNC_STATUS_COMPLETED && retry < 20) {
+        USBSerial.print(".");
+        delay(500); // Wait 500ms
+        retry++;
+    }
+    USBSerial.println();
+
+    // 4. Check if we actually got a new time
+    if (sntp_get_sync_status() != SNTP_SYNC_STATUS_COMPLETED) {
+        USBSerial.println("NTP: Timeout! Failed to reach server.");
+        return;
+    }
+
+    // 5. NOW fetch the *fresh* time from the system
+    struct tm ntp_tm;
+    getLocalTime(&ntp_tm); 
+
+    // --- (Rest of your comparison logic works fine now) ---
     
+    // Get RTC time
+    RTC_DateTime rtc_now = rtc.getDateTime();
     struct tm rtc_tm;
     rtc_tm.tm_year = rtc_now.getYear() - 1900;
     rtc_tm.tm_mon  = rtc_now.getMonth() - 1;
@@ -78,15 +109,13 @@ void syncNTP(void) {
 
     time_t ntp_epoch = mktime(&ntp_tm);
     time_t rtc_epoch = mktime(&rtc_tm);
+    
+    long diff = ntp_epoch - rtc_epoch;
 
-    // 4. Compare (Diff > 2 seconds)
-    double diff = difftime(ntp_epoch, rtc_epoch);
-    USBSerial.printf("NTP: %ld, RTC: %ld, Diff: %.0f sec\n", ntp_epoch, rtc_epoch, diff);
+    USBSerial.printf("NTP Epoch: %ld, RTC Epoch: %ld, Diff: %ld\n", ntp_epoch, rtc_epoch, diff);
 
     if (abs(diff) > 2) {
         USBSerial.println("NTP: Updating RTC...");
-        
-        // Update RTC
         rtc.setDateTime(
             ntp_tm.tm_year + 1900,
             ntp_tm.tm_mon + 1,
@@ -95,10 +124,8 @@ void syncNTP(void) {
             ntp_tm.tm_min,
             ntp_tm.tm_sec
         );
-
-        // Also sync the internal ESP32 system time immediately
+        // Important: Re-sync system time to ensure milliseconds are aligned
         syncTimeFromRTC(); 
-        
         USBSerial.println("NTP: Sync Complete.");
     } else {
         USBSerial.println("NTP: RTC is already accurate.");

@@ -8,6 +8,11 @@ void backgroundUpdate(void *pvParameters) {
     (void) pvParameters;
 
     uint32_t last_update = millis();
+    bool is_dimmed = false; // Track dim state
+
+    // Motion Detection Variables
+    float acc_x, acc_y, acc_z;
+    static float last_acc_x = 0, last_acc_y = 0, last_acc_z = 0;
     
     // --- FIX 1: Removed the "Ghost" label creation here ---
     // lv_obj_t *label = lv_label_create(lv_scr_act()); 
@@ -18,6 +23,43 @@ void backgroundUpdate(void *pvParameters) {
     for(;;) {
         // Let LVGL manage the UI (inputs, animations, etc.)
         lv_task_handler();
+
+        // ---------------------------------------------------------
+        // CHECK FOR MOVEMENT (IMU)
+        // ---------------------------------------------------------
+        if (imu.getAccelerometer(acc_x, acc_y, acc_z)) {
+            // Calculate total change in acceleration (Sensitivity)
+            float delta = fabs(acc_x - last_acc_x) + fabs(acc_y - last_acc_y) + fabs(acc_z - last_acc_z);
+            
+            // If movement > 0.2g (adjust as needed), reset timer
+            if (delta > 0.2) {
+                awake_time = 0; 
+            }
+            
+            last_acc_x = acc_x;
+            last_acc_y = acc_y;
+            last_acc_z = acc_z;
+        }
+
+        // ---------------------------------------------------------
+        // AUTO-DIM LOGIC
+        // ---------------------------------------------------------
+        // If idle for 10+ seconds: DIM
+        if(awake_time >= 10) {
+            if(!is_dimmed) {
+                dimDisplay(); 
+                is_dimmed = true;
+                // USBSerial.println("Auto-Dim: ON");
+            }
+        }
+        // If active (< 10 seconds): RESTORE
+        else {
+            if(is_dimmed) {
+                restoreBrightness();
+                is_dimmed = false;
+                // USBSerial.println("Auto-Dim: OFF");
+            }
+        }
 
         if(awake_time > 30) {
             modeSleep();
@@ -167,8 +209,15 @@ void backgroundSyncTime(void *pvParameters) {
     (void) pvParameters;
 
     uint32_t last_update = millis();
+    uint32_t last_ntp_sync = millis();
     uint32_t seconds_to_resync = 0;
     for(;;) {
+        if((uint32_t)(millis() - last_ntp_sync) > 999) {
+            if(_was_connected)
+                syncNTP();
+            last_ntp_sync = millis();
+        }
+
         if((uint32_t)(millis() - last_update) > 999) {
             seconds_to_resync++;
             last_update = millis();
@@ -194,7 +243,9 @@ void backgroundSyncTime(void *pvParameters) {
 void backgroundMonitorWiFi(void *pvParameters) {
     (void) pvParameters;
 
+    init_wifi_manager();
     uint32_t last_update = millis();
+
     for(;;) {
         if((uint32_t)(millis() - last_update) > 2000) {
             monitor_wifi();

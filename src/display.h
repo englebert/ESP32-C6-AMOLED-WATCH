@@ -18,5 +18,7 @@ void rounder_event_cb(lv_event_t *e);
 void gesture_event_cb(lv_event_t *e);
 void setBrightness(uint8_t percent);
 uint8_t getBrightness(void);
+void dimDisplay(void);      // Sets brightness to 10% (temporary)
+void restoreBrightness(void); // Restores user's saved brightness
 
 #endif

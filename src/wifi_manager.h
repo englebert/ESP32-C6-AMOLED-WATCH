@@ -5,6 +5,8 @@
 #include "main.h"
 #include <vector>
 
+extern bool _was_connected;
+
 struct WifiCred {
     String ssid;
     String pass;
@@ -26,5 +28,6 @@ void auto_connect_wifi();
 bool is_wifi_connected();
 String get_wifi_ip();
 void monitor_wifi();
+void disable_wifi();
 
 #endif

@@ -140,19 +140,29 @@ void disp_flush(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map) {
     lv_disp_flush_ready(disp);
 }
 
-void setBrightness(uint8_t percent) {
-    if (percent > 100) percent = 100;
-
-    // 2. SAVE the value here
-    _current_brightness = percent;
-
-    // Map to 0-255
+void _write_brightness(uint8_t percent) {
     uint8_t val = map(percent, 0, 100, 0, 255);
-
     bus->beginWrite();
     bus->writeC8D8(CO5300_W_WDBRIGHTNESSVALNOR, val);
     bus->endWrite();
-    // USBSerial.printf("Brightness: %d%% (Val: %d)\n", percent, val);
+}
+
+void setBrightness(uint8_t percent) {
+    if (percent > 100) percent = 100;
+
+    // 1. SAVE the user preference
+    _current_brightness = percent;
+
+    // 2. APPLY it to hardware
+    _write_brightness(percent);
+}
+
+void dimDisplay(void) {
+    _write_brightness(10); 
+}
+
+void restoreBrightness(void) {
+    _write_brightness(_current_brightness);
 }
 
 uint8_t getBrightness(void) {

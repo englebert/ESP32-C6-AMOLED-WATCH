@@ -3,7 +3,7 @@
 
 #define WIFI_DB "/wifistore.db"
 
-static bool _was_connected = false;
+bool _was_connected = false;
 
 void init_wifi_manager() {
     // 1. Mount File System
@@ -88,17 +88,33 @@ String get_wifi_ip() {
 
 void monitor_wifi() {
     bool is_connected = (WiFi.status() == WL_CONNECTED);
+    bool has_ip = (WiFi.localIP() != IPAddress(0,0,0,0));
 
     // Detect Rising Edge (Disconnected -> Connected)
-    if (is_connected && !_was_connected) {
+    if (is_connected && has_ip && !_was_connected) {
         USBSerial.println("WiFi: Connected! Triggering NTP Sync...");
-        
+        USBSerial.println(WiFi.localIP());
+  
         // Give it a moment to stabilize network stack
-        delay(500); 
+        // delay(10000); 
         
         // Trigger NTP
-        syncNTP();
-    }
+        // syncNTP();
 
-    _was_connected = is_connected;
+        _was_connected = true;   
+    }
+    // Reset state if we lose connection
+    if (!is_connected) {
+        _was_connected = false;
+    }
+}
+
+void disable_wifi() {
+    // Only turn off if currently active to save time
+    if (WiFi.getMode() != WIFI_OFF) {
+        USBSerial.println("System: Disabling WiFi for Sleep...");
+        WiFi.disconnect(true);  // Disconnect and remove saved credential from RAM
+        WiFi.mode(WIFI_OFF);    // Turn off Radio
+        _was_connected = false; // Reset state so monitor_wifi works next time
+    }
 }

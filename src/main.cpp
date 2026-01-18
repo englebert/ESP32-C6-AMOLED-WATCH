@@ -36,6 +36,7 @@ void adcOff(void) {
 
 void setup(void) {
     USBSerial.begin(115200);
+
     delay(50);
 
     // USBSerial.println("[My Watch 1.0]");
@@ -49,11 +50,9 @@ void setup(void) {
     Wire.begin(IIC_SDA, IIC_SCL);
 
     init_rtc();
+    init_ntp();
     init_display();
     init_power();
-
-    // TODO: move this task!!
-    init_wifi_manager();
 
     // Checking for wake up reason
     esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
