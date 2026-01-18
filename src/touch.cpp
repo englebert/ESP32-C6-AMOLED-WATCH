@@ -85,6 +85,9 @@ void touchpad_read(lv_indev_t *indev, lv_indev_data_t *data) {
     if (touched) {
         FT3168->IIC_Interrupt_Flag = false;
 
+        // Trigger awake time = 0 so it will continue lit the display
+        awake_time = 0;
+
         // 1. Check how many fingers are present
         int fingers = FT3168->IIC_Read_Device_Value(FT3168->Arduino_IIC_Touch::Value_Information::TOUCH_FINGER_NUMBER);
 

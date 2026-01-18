@@ -211,10 +211,12 @@ void backgroundSyncTime(void *pvParameters) {
     uint32_t last_update = millis();
     uint32_t last_ntp_sync = millis();
     uint32_t seconds_to_resync = 0;
+
     for(;;) {
-        if((uint32_t)(millis() - last_ntp_sync) > 999) {
-            if(_was_connected)
-                syncNTP();
+        // --- FIX: Change 999ms (1s) to 3600000ms (1 Hour) ---
+        if(_was_connected && (uint32_t)(millis() - last_ntp_sync) > 3600000) {
+            USBSerial.println("Scheduled NTP Sync...");
+            syncNTP();
             last_ntp_sync = millis();
         }
 
@@ -236,7 +238,7 @@ void backgroundSyncTime(void *pvParameters) {
             seconds_to_resync = 0;
         }
 
-        vTaskDelay(10);
+        vTaskDelay(100);
     }
 }
 

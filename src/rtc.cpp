@@ -77,7 +77,7 @@ void syncNTP(void) {
     // 3. WAIT for the sync to complete (Critical Step!)
     // If we don't wait, getLocalTime just returns the old RTC time immediately.
     int retry = 0;
-    while (sntp_get_sync_status() != SNTP_SYNC_STATUS_COMPLETED && retry < 20) {
+    while (sntp_get_sync_status() != SNTP_SYNC_STATUS_COMPLETED && retry < 40) {
         USBSerial.print(".");
         delay(500); // Wait 500ms
         retry++;
