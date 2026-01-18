@@ -111,14 +111,16 @@ void load_watchface_analog_simple() {
 
     // Battery Label
     ui_BattLabel = lv_label_create(ui_Bg);
-    lv_obj_align(ui_BattLabel, LV_ALIGN_TOP_RIGHT, -20, 5);
+    lv_obj_align(ui_BattLabel, LV_ALIGN_TOP_RIGHT, -60, 5);
     lv_obj_set_style_text_font(ui_BattLabel, &lv_font_montserrat_22, LV_PART_MAIN);
     lv_label_set_text(ui_BattLabel, "");
 
     // Battery Icon
     ui_BattIcon = lv_label_create(ui_Bg);
-    lv_obj_align(ui_BattIcon, LV_ALIGN_TOP_RIGHT, -85, 10);
+    lv_obj_align(ui_BattIcon, LV_ALIGN_TOP_RIGHT, -30, 4);
     lv_obj_set_style_text_color(ui_BattIcon, lv_color_hex(0xFFFFFF), 0);
+    lv_obj_set_style_text_font(ui_BattIcon, &lv_font_montserrat_24, 0);
+    // lv_image_set_scale(ui_BattIcon, 512);
     lv_label_set_text(ui_BattIcon, LV_SYMBOL_BATTERY_FULL);
 
     update_watchface_analog_simple();

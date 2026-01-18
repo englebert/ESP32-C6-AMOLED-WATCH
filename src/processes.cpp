@@ -209,7 +209,7 @@ void backgroundSyncTime(void *pvParameters) {
     (void) pvParameters;
 
     uint32_t last_update = millis();
-    uint32_t last_ntp_sync = millis();
+    uint32_t last_ntp_sync = 0;
     uint32_t seconds_to_resync = 0;
 
     for(;;) {

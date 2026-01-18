@@ -99,7 +99,7 @@ void monitor_wifi() {
         // delay(10000); 
         
         // Trigger NTP
-        // syncNTP();
+        syncNTP();
 
         _was_connected = true;   
     }
