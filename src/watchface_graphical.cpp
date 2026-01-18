@@ -60,7 +60,7 @@ void update_watchface_graphical() {
         lv_label_set_text(ui_TimeLabel, time_buffer);
 
         // Update Date
-        strftime(date_buffer, sizeof(date_buffer), "%a, %d %b", &timeinfo);
+        strftime(date_buffer, sizeof(date_buffer), "%a, %d %b %Y", &timeinfo);
         lv_label_set_text(ui_DateLabel, date_buffer);
     }
 
