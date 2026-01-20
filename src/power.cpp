@@ -2,6 +2,9 @@
 #include "power.h"
 
 XPowersPMU power;
+uint16_t sleep_count = 0;
+
+static uint8_t interrupt_count = 0;
 
 void init_power(void) {
     power.disableIRQ(XPOWERS_AXP2101_ALL_IRQ);
@@ -69,11 +72,28 @@ void modeSleep(void) {
 
     // Enable GPIO wake-up feature for Light Sleep
     esp_sleep_enable_gpio_wakeup();
+    time_t last_wake_time = rtc.hwClockRead();
 
-    // Enter Light Sleep
-    USBSerial.println("Goodnight.");
+    while(interrupt_count < 20) {
+        // Enter Light Sleep
+        USBSerial.println("Goodnight.");
     
-    esp_light_sleep_start();
+        esp_light_sleep_start();
+        time_t now = rtc.hwClockRead();
+        if (now != -1 && last_wake_time != -1) {
+            time_t diff = now - last_wake_time;
+            // User Requirement: If > 1 second passed, reset counter
+            if (diff > 1) {
+                USBSerial.printf("Long Sleep (%ld sec). Resetting Count.\n", (long)diff);
+                interrupt_count = 0;
+            }
+        }
+
+        last_wake_time = now;
+        interrupt_count++;
+    }
+
+    interrupt_count = 0;
 
     USBSerial.println("Woke up!");
     awake_time = 0;
@@ -92,4 +112,5 @@ void modeSleep(void) {
 
     // Turn on backlight
     power.enableBLDO1();
+    sleep_count++;
 }

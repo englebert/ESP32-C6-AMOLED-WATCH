@@ -15,6 +15,7 @@ static lv_obj_t *ui_CenterDot = NULL;
 static lv_obj_t *ui_DateLabel = NULL;
 static lv_obj_t *ui_BattLabel = NULL;
 static lv_obj_t *ui_BattIcon = NULL;
+static lv_obj_t *ui_SleepCounterLabel = NULL;
 
 static char date_buffer[32];
 
@@ -123,6 +124,14 @@ void load_watchface_analog_simple() {
     // lv_image_set_scale(ui_BattIcon, 512);
     lv_label_set_text(ui_BattIcon, LV_SYMBOL_BATTERY_FULL);
 
+    // Sleep counter Label
+    ui_SleepCounterLabel = lv_label_create(ui_Bg);
+    lv_obj_align(ui_SleepCounterLabel, LV_ALIGN_TOP_LEFT, 20, 4);
+    lv_obj_set_style_text_color(ui_SleepCounterLabel, lv_color_hex(0xFF11FF), 0);
+    lv_obj_set_style_text_font(ui_SleepCounterLabel, &lv_font_montserrat_24, 0);
+    lv_label_set_text(ui_SleepCounterLabel, "");
+    
+
     update_watchface_analog_simple();
 }
 
@@ -157,6 +166,8 @@ void update_watchface_analog_simple() {
         bool chg = power.isCharging();
         lv_label_set_text_fmt(ui_BattLabel, "%d%%", batt);
         lv_label_set_text(ui_BattIcon, get_batt_symbol(batt, chg));
+
+        lv_label_set_text_fmt(ui_SleepCounterLabel, "On: %d", sleep_count);
         
         if(batt < 20) {
             lv_obj_set_style_text_color(ui_BattLabel, lv_color_hex(0xFF0000), LV_PART_MAIN);

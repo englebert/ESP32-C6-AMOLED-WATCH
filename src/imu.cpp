@@ -36,7 +36,7 @@ void enable_imu_wakeup(void) {
     
     // Params: Threshold (mg), ODR, IntPin, DefaultLevel (1=High), BlankingTime
     imu.configWakeOnMotion(
-        250, // Threshold: 250mg (Lower = more sensitive)
+        125, // Threshold: 125mg (Lower = more sensitive)
         SensorQMI8658::ACC_ODR_LOWPOWER_128Hz, 
         QMI_INT_LOGIC,
         1    // 1 means the pin stays HIGH and drops LOW on interrupt

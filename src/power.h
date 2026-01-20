@@ -4,6 +4,7 @@
 #include "main.h"
 
 extern XPowersPMU power;
+extern uint16_t sleep_count;
 
 void init_power(void);
 void adcOn(void);
