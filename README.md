@@ -1,136 +1,94 @@
 # ESP32-C6 AMOLED Smartwatch Firmware
 
-A high-performance smartwatch firmware optimized for the **ESP32-C6 (RISC-V)** microcontroller. This project drives a large **1.8" 410x502 AMOLED** display using **QSPI** and features a smooth, gesture-based UI built with **LVGL**.
+A custom, power-efficient smartwatch firmware built for the **Waveshare ESP32-C6 AMOLED** development board. This project integrates LVGL for a smooth UI, advanced power management (Light Sleep & CPU scaling), and sensor fusion for wake-on-motion capabilities.
 
-## ⚡ Key Features
+## 🚀 Features
 
-* **Core:** ESP32-C6 (RISC-V 32-bit RISC-V CPU) with WiFi 6 & BLE 5.3.
-* **Display:** 410x502 AMOLED (CO5300 Controller) running in **QSPI Mode** for high frame rates.
-* **User Interface:**
-* **LVGL 9** integration for smooth animations.
-* **Gestures:** Swipe Left/Right to change pages, Up/Down to switch watch faces.
+### 🎨 User Interface (LVGL)
 
+* **Multiple Watchfaces:** Graphical, Analog, Simple, and Terminal styles.
+* **Gesture Navigation:** Swipe Left/Right to change pages, Up/Down to switch watch faces.
+* **Stats Dashboard:** Real-time battery voltage, IMU data, and system uptime.
+* **Settings & WiFi:** Dedicated pages for on-device configuration.
 
-* **Power Management:**
-* **Deep/Light Sleep:** < 2mA standby current.
-* **Wake Sources:** Touchscreen (FT3168), Power Button, and **Motion (Lift-to-Wake)**.
+### ⚡ Power Management
 
+* **Smart Sleep:** Enters **Light Sleep** (saving state) after 30 seconds of inactivity.
+* **Dynamic CPU Scaling:** drops to **80MHz** during sleep to save power, boosts to **160MHz** on wake-up for smooth UI.
+* **Auto-Dimming:** Dims screen brightness to 10% after 10 seconds of inactivity; restores immediately on motion or touch.
+* **Hardware Control:** Manages AXP2101 PMU to cut power to the screen and peripherals during sleep.
 
-* **System Tools:**
-* **Terminal Watchface:** Simulates a Linux shell to display real-time I2C scanning, battery voltage (mV), and system uptime.
-* **Time Sync:** Automatic synchronization between internal ESP32 timer and external RTC (PCF85063).
+### 📡 Connectivity & Time
 
-
-
-## ⌚ Watch Faces
-
-1. **Analog (Premium):** Features smooth sweeping hands (using milliseconds), dynamic geometry for 410px width, and battery status.
-2. **Graphical (Digital):** Modern layout with large fonts and dynamic color changing based on battery level.
-3. **Terminal (SysInfo):** A developer-focused face that "types" out system commands to show:
-* Real-time Battery Voltage & Percentage.
-* Live I2C Bus Scan (detects connected peripherals).
-* Total System Uptime.
-* Current Date/Time.
+* **WiFi Manager:** Auto-connects to known networks stored in persistent storage (LittleFS).
+* **Precision Time:** Syncs onboard **PCF85063 RTC** via **NTP** (Google/NIST) every hour when connected.
+* **Wake Sources:**
+* **Double Tap / Touch:** (FT3168 Touch Controller in Monitor Mode).
+* **Lift-to-Wake:** (QMI8658 IMU interrupt on wrist movement).
 
 
 
 ## 🛠 Hardware Specifications
 
-This firmware is configured for **Waveshare ESP32-C6-Touch-AMOLED-1.8** (or compatible boards).
+* **MCU:** ESP32-C6 (RISC-V 32-bit Single-core + LP Core)
+* **Display:** 1.47" AMOLED (454x454) with **CO5300** driver (QSPI)
+* **Touch:** **FT3168** Capacitive Touch
+* **PMU:** **AXP2101** Power Management Unit
+* **IMU:** **QMI8658** 6-Axis Accelerometer & Gyroscope
+* **RTC:** **PCF85063** I2C Real-Time Clock
 
-| Component | Model | Interface | Notes |
-| --- | --- | --- | --- |
-| **MCU** | ESP32-C6 | - | 160MHz RISC-V |
-| **Display** | 1.8" AMOLED | **QSPI** | 410x502 Resolution, CO5300 Driver |
-| **Touch** | FT3168 | I2C | Address `0x38` |
-| **IMU** | QMI8658 | I2C | 6-Axis, Address `0x6B` |
-| **RTC** | PCF85063 | I2C | Precision Timekeeping |
-| **PMU** | AXP2101 | I2C | Power Management Unit |
+## 📦 Libraries & Dependencies
 
-## 🔌 Pin Configuration (QSPI)
+This project is built using **PlatformIO** / **Arduino IDE**. Ensure you have the following libraries installed:
 
-The display uses the ESP32-C6's specialized SPI peripheral in Quad Mode.
+* **LVGL** (Light and Versatile Graphics Library) - *v8.x or v9.x*
+* **Arduino_GFX_Library** - *For CO5300 Display Driver*
+* **XPowersLib** - *For AXP2101 PMU control*
+* **SensorLib** (by Lewis He) - *For QMI8658 IMU and PCF85063 RTC*
+* **LittleFS** - *For saving WiFi credentials*
 
-```cpp
-// src/pin_config.h
+## 🎮 Controls & Gestures
 
-// Display (QSPI)
-#define LCD_CS    5
-#define LCD_SCLK  0
-#define LCD_SDIO0 1  // Data 0
-#define LCD_SDIO1 2  // Data 1
-#define LCD_SDIO2 3  // Data 2
-#define LCD_SDIO3 4  // Data 3
-#define LCD_RESET 11
+| Gesture | Action |
+| --- | --- |
+| **Swipe Left/Right** | Switch between Watchface, Stats, Settings, WiFi pages |
+| **Swipe Up/Down** | Cycle through different Watchface designs (on Home screen) |
+| **Cover/Idle (10s)** | Dims screen to 10% brightness |
+| **Idle (30s)** | Enters Sleep Mode (Screen Off) |
+| **Wrist Shake / Touch** | Wakes device from Sleep |
 
-// Touch (I2C)
-#define TP_SDA    6
-#define TP_SCL    7
-#define TP_INT    21
-#define TP_RST    22
+## 📂 File Structure Overview
 
-// IMU (Interrupt)
-#define IMU_INT1  20 // Motion Wakeup Pin
+* `src/main.cpp` - Entry point, initialization.
+* `src/display.cpp` - LVGL & GFX setup, buffer management, brightness control.
+* `src/power.cpp` - Sleep logic, AXP2101 PMU config, CPU frequency scaling.
+* `src/processes.cpp` - Background tasks (Time sync, Auto-dim logic, WiFi monitoring).
+* `src/rtc.cpp` - RTC time reading and NTP synchronization logic.
+* `src/imu.cpp` - QMI8658 setup and "Wake-on-Motion" interrupt config.
+* `src/wifi_manager.cpp` - Handles scanning, saving, and connecting to WiFi.
 
-```
+## ⚙️ Configuration Notes
 
-## 📂 Project Structure
+### Adjusting Wake Sensitivity
 
-```text
-├── src/
-│   ├── main.cpp                 # Boot logic & Interrupt setup
-│   ├── display.cpp              # QSPI Display Driver & LVGL Init
-│   ├── imu.cpp                  # QMI8658 Config & Lift-to-Wake Logic
-│   ├── power.cpp                # AXP2101 & Sleep Mode Handler
-│   ├── rtc.cpp                  # Time Synchronization
-│   ├── watchface_terminal.cpp   # "Hacker" Style System Info Face
-│   ├── watchface_analog.cpp     # High-Res Analog Clock
-│   ├── watchface_graphical.cpp  # Digital Clock
-│   └── processes.cpp            # FreeRTOS Tasks (UI Update Loop)
-├── platformio.ini               # Compiler Flags for ESP32-C6
-└── README.md
-
-```
-
-## 🚀 Getting Started
-
-### 1. Requirements
-
-* **VS Code** with **PlatformIO**.
-* **Libraries** (Managed via `platformio.ini`):
-* `lvgl/lvgl`
-* `moononournation/GFX Library for Arduino`
-* `lewisxhe/XPowersLib`
-* `lewisxhe/SensorLib`
-
-
-
-### 2. Build Flags
-
-Ensure your `platformio.ini` targets the C6 and enables USB CDC for debugging:
-
-```ini
-[env:esp32-c6-amoled]
-platform = espressif32
-board = esp32-c6-devkitc-1
-framework = arduino
-build_flags = 
-    -D ARDUINO_USB_CDC_ON_BOOT=1 
-    -D ARDUINO_USB_MODE=1
-
-```
-
-### 3. Sensitivity Tuning
-
-To adjust how easily the watch wakes up when you raise your wrist, edit `src/imu.cpp`:
+If the watch wakes up too easily, adjust the threshold in `src/processes.cpp`:
 
 ```cpp
-// Value: 1 (Most Sensitive) to 255 (Least Sensitive)
-// Recommended: 150
-imu.configWakeOnMotion(150, ...);
+// Increase value (e.g., 0.5) for harder shake, decrease (0.1) for sensitive
+if (delta > 0.5) { 
+    awake_time = 0;  
+}
 
 ```
 
-## 📄 License
+### CPU Frequency
 
-MIT License. Feel free to use and modify for your own wearable projects.
+The system defaults to dynamic scaling to balance performance and battery:
+
+* **Active:** 160MHz
+* **Sleep:** 80MHz (Safe for USB logging) / 40MHz (Max savings, no USB)
+
+---
+
+**Author:** Englebert Lai
+**License:** MIT
