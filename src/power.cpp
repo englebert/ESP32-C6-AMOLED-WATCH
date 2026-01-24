@@ -74,9 +74,13 @@ void modeSleep(void) {
     esp_sleep_enable_gpio_wakeup();
     time_t last_wake_time = rtc.hwClockRead();
 
+    // 80MHz is safe for USB Debugging. 
+    // You can try 40, 20, or 10 for max savings, but USBSerial might break.
+    setCpuFrequencyMhz(10);
+
     while(interrupt_count < 20) {
         // Enter Light Sleep
-        USBSerial.println("Goodnight.");
+        // USBSerial.println("Goodnight.");
     
         esp_light_sleep_start();
         time_t now = rtc.hwClockRead();
@@ -84,7 +88,7 @@ void modeSleep(void) {
             time_t diff = now - last_wake_time;
             // User Requirement: If > 1 second passed, reset counter
             if (diff > 1) {
-                USBSerial.printf("Long Sleep (%ld sec). Resetting Count.\n", (long)diff);
+                // USBSerial.printf("Long Sleep (%ld sec). Resetting Count.\n", (long)diff);
                 interrupt_count = 0;
             }
         }
@@ -92,6 +96,9 @@ void modeSleep(void) {
         last_wake_time = now;
         interrupt_count++;
     }
+
+    // Restore Max CPU Frequency for UI Performance ---
+    setCpuFrequencyMhz(160);
 
     interrupt_count = 0;
 
