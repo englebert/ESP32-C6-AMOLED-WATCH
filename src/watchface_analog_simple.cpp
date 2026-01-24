@@ -16,6 +16,7 @@ static lv_obj_t *ui_DateLabel = NULL;
 static lv_obj_t *ui_BattLabel = NULL;
 static lv_obj_t *ui_BattIcon = NULL;
 static lv_obj_t *ui_SleepCounterLabel = NULL;
+static lv_obj_t *ui_GyroDeltaLabel = NULL;
 
 static char date_buffer[32];
 
@@ -126,10 +127,17 @@ void load_watchface_analog_simple() {
 
     // Sleep counter Label
     ui_SleepCounterLabel = lv_label_create(ui_Bg);
-    lv_obj_align(ui_SleepCounterLabel, LV_ALIGN_TOP_LEFT, 20, 4);
-    lv_obj_set_style_text_color(ui_SleepCounterLabel, lv_color_hex(0xFF11FF), 0);
+    lv_obj_align(ui_SleepCounterLabel, LV_ALIGN_TOP_LEFT, 20, 6);
+    lv_obj_set_style_text_color(ui_SleepCounterLabel, lv_color_hex(0xBBBBBB), 0);
     lv_obj_set_style_text_font(ui_SleepCounterLabel, &lv_font_montserrat_24, 0);
     lv_label_set_text(ui_SleepCounterLabel, "");
+   
+    // Gyro Delta 
+    ui_GyroDeltaLabel = lv_label_create(ui_Bg);
+    lv_obj_align(ui_GyroDeltaLabel, LV_ALIGN_TOP_MID, 0, 4);
+    lv_obj_set_style_text_color(ui_GyroDeltaLabel, lv_color_hex(0x009900), 0);
+    lv_obj_set_style_text_font(ui_GyroDeltaLabel, &lv_font_montserrat_24, 0);
+    lv_label_set_text(ui_GyroDeltaLabel, "");
     
 
     update_watchface_analog_simple();
@@ -166,18 +174,32 @@ void update_watchface_analog_simple() {
         bool chg = power.isCharging();
         lv_label_set_text_fmt(ui_BattLabel, "%d%%", batt);
         lv_label_set_text(ui_BattIcon, get_batt_symbol(batt, chg));
-
         lv_label_set_text_fmt(ui_SleepCounterLabel, "On: %d", sleep_count);
         
         if(batt < 20) {
             lv_obj_set_style_text_color(ui_BattLabel, lv_color_hex(0xFF0000), LV_PART_MAIN);
         } else {
             if(power.isCharging()) {
-                lv_obj_set_style_text_color(ui_BattLabel, lv_color_hex(0x0000FF), LV_PART_MAIN);
+                lv_obj_set_style_text_color(ui_BattLabel, lv_color_hex(0xAAAAFF), LV_PART_MAIN);
             } else {
                 lv_obj_set_style_text_color(ui_BattLabel, lv_color_hex(0x00FF00), LV_PART_MAIN);
             }
         }
+    }
+
+    static uint32_t last_gyro_update = 0;
+    static char buffer[64];
+    static uint16_t delay_last_gyro_update = 99;
+    if ((uint32_t)(millis() - last_gyro_update) > delay_last_gyro_update) {
+        sprintf(buffer, "Delta: %.2f", delta);
+        lv_label_set_text_fmt(ui_GyroDeltaLabel, buffer);
+        if(delta < 1.0) {
+            delay_last_gyro_update = 99;
+        } else {
+            delay_last_gyro_update = 1999;
+        }
+        
+        last_gyro_update = millis();
     }
 
     if (timeinfo) {

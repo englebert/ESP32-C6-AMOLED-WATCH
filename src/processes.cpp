@@ -3,6 +3,7 @@
 
 uint32_t total_awake_time = 0;
 uint32_t awake_time = 0;
+float delta = 0.0;
 
 void backgroundUpdate(void *pvParameters) {
     (void) pvParameters;
@@ -29,10 +30,10 @@ void backgroundUpdate(void *pvParameters) {
         // ---------------------------------------------------------
         if (imu.getAccelerometer(acc_x, acc_y, acc_z)) {
             // Calculate total change in acceleration (Sensitivity)
-            float delta = fabs(acc_x - last_acc_x) + fabs(acc_y - last_acc_y) + fabs(acc_z - last_acc_z);
+            delta = fabs(acc_x - last_acc_x) + fabs(acc_y - last_acc_y) + fabs(acc_z - last_acc_z);
             
-            // If movement > 0.2g (adjust as needed), reset timer
-            if (delta > 0.2) {
+            // If movement (in g) reset timer
+            if (delta > 4.0) {
                 awake_time = 0; 
             }
             
